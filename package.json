@@ -1,0 +1,12 @@
+{
+  "name": "r1wrapper",
+  "version": "0.1.0",
+  "description": "R1 Hermes ACP slot hijack — routes Rabbit R1 Hermes sessions to Cursor CLI",
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/**/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

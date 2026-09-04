@@ -1,0 +1,20 @@
+{
+  "backend": "cursor",
+  "agentName": "hermes-agent",
+  "agentVersion": "0.20.6-r1wrapper",
+  "cwd": "C:\\Users\\koryi\\R1Agent",
+  "autoApprovePermissions": true,
+  "logDir": "%LOCALAPPDATA%\\R1Wrapper\\logs",
+  "cursor": {
+    "command": "agent",
+    "args": ["acp"],
+    "defaultModel": "composer-2.5",
+    "defaultModelParameters": {
+      "fast": "false"
+    }
+  },
+  "gemini": {
+    "command": "gemini",
+    "args": ["--acp"]
+  }
+}

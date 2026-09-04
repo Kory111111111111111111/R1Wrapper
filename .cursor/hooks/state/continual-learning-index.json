@@ -1,0 +1,20 @@
+{
+  "transcripts": {
+    "0ddc9fa3-f226-4133-b5a4-4fa542977e2a/0ddc9fa3-f226-4133-b5a4-4fa542977e2a.jsonl": {
+      "mtimeMs": 1788490345854,
+      "processedAt": "2026-09-04T02:53:00.000Z"
+    },
+    "0ddc9fa3-f226-4133-b5a4-4fa542977e2a/subagents/06a49599-5511-47ca-b9c6-94bf42908d09.jsonl": {
+      "mtimeMs": 1788490405249,
+      "processedAt": "2026-09-04T02:53:00.000Z"
+    },
+    "e65b2ebf-7c23-4707-bf75-4a14d9324258/e65b2ebf-7c23-4707-bf75-4a14d9324258.jsonl": {
+      "mtimeMs": 1788481903064,
+      "processedAt": "2026-09-04T02:53:00.000Z"
+    },
+    "e65b2ebf-7c23-4707-bf75-4a14d9324258/subagents/878304b3-0e8a-40ab-8257-328c707b2492.jsonl": {
+      "mtimeMs": 1788481898393,
+      "processedAt": "2026-09-04T02:53:00.000Z"
+    }
+  }
+}
