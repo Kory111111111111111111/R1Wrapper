@@ -36,6 +36,7 @@ That will:
 
 - Point `%LOCALAPPDATA%\hermes\bin\hermes.cmd` (and `hermes-acp.cmd`) at this repo
 - Create `%USERPROFILE%\R1Agent` (that is the workspace the R1 agent writes into)
+- Write `src/config.json` from the example if it is missing (stamped with this PC's paths)
 - Register a hidden `\R1Wrapper\repair-hijack` task (fixes drifted launchers; does **not** restart rabbit-agent)
 - Remove leftover `\RabbitR1HermesWatchdog` if it is still registered
 - Restart rabbit-agent once (install only)
@@ -46,15 +47,13 @@ After a Hermes update, run `.\scripts\install-hijack.ps1` again. Hermes likes to
 
 ## Config
 
-`src/config.json` is the whole thing. Do not put API keys in it. Gemini auth stays in the Gemini CLI store. Cursor auth stays in Cursor CLI.
+`src/config.json` is **yours** and is not committed. Copy from `src/config.example.json` (install does this if the local file is missing). Do not put API keys in it. Gemini auth stays in the Gemini CLI store. Cursor auth stays in Cursor CLI.
 
-**Workspace** (`cwd`): where files from the R1 land.
+**Workspace** (`cwd`): where files from the R1 land. On this kind of PC that is a real path like `C:\Users\<you>\R1Agent`. The example file uses `%USERPROFILE%\R1Agent` so a fresh clone still works before you customize it.
 
 ```json
-"cwd": "%USERPROFILE%\\R1Agent"
+"cwd": "C:\\Users\\<you>\\R1Agent"
 ```
-
-That follows whoever is logged into Windows. You can also set a full path if you want the workspace somewhere else. Only edit `cwd` if you want a different folder — the shipped default is already portable.
 
 **Backend:** only switch this:
 

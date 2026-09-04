@@ -24,8 +24,30 @@ $RepoBin = Join-Path $RepoRoot "bin"
 $HermesBin = Join-Path $env:LOCALAPPDATA "hermes\bin"
 $Workspace = Join-Path $env:USERPROFILE "R1Agent"
 $LogDir = Join-Path $env:LOCALAPPDATA "R1Wrapper\logs"
+$ConfigExamplePath = Join-Path $RepoRoot "src\config.example.json"
+$ConfigPath = Join-Path $RepoRoot "src\config.json"
 $RepairScript = Join-Path $PSScriptRoot "repair-hijack.ps1"
 $TaskName = "R1Wrapper\repair-hijack"
+
+function Initialize-LocalConfig {
+  if (Test-Path $ConfigPath) {
+    Write-Host "Local config already present: $ConfigPath"
+    return
+  }
+  if (-not (Test-Path $ConfigExamplePath)) {
+    Write-Host "config.example.json not found; skip local config create"
+    return
+  }
+
+  Copy-Item -Path $ConfigExamplePath -Destination $ConfigPath
+  $cfg = Get-Content -Path $ConfigPath -Raw | ConvertFrom-Json
+  $cfg.cwd = $Workspace
+  $cfg.logDir = $LogDir
+  $json = $cfg | ConvertTo-Json -Depth 8
+  $utf8 = New-Object System.Text.UTF8Encoding $false
+  [System.IO.File]::WriteAllText($ConfigPath, $json + [Environment]::NewLine, $utf8)
+  Write-Host "Wrote local config for this PC: $ConfigPath"
+}
 
 function Remove-LeftoverHermesWatchdog {
   $watchdog = Get-ScheduledTask -TaskName "RabbitR1HermesWatchdog" -ErrorAction SilentlyContinue
@@ -101,6 +123,7 @@ function Install-Hijack {
   New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
   Write-Host "Workspace: $Workspace"
   Write-Host "Logs: $LogDir"
+  Initialize-LocalConfig
 
   if (-not (Test-Path $HermesBin)) {
     throw "Hermes bin directory not found: $HermesBin"

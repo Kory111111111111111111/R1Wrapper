@@ -10,6 +10,14 @@ function expandEnv(value) {
   return value.replace(/%([^%]+)%/g, (_, key) => process.env[key] ?? "");
 }
 
+function resolveDefaultConfigPath() {
+  const localPath = join(__dirname, "config.json");
+  if (existsSync(localPath)) {
+    return localPath;
+  }
+  return join(__dirname, "config.example.json");
+}
+
 /**
  * @param {string} backendId
  * @param {{ args?: string[], defaultModel?: string }} backendBlock
@@ -91,7 +99,7 @@ function resolveBackendBlock(backendId, raw) {
  * @returns {import('./types.mjs').ProxyConfig}
  */
 export function loadConfig(configPath) {
-  const path = configPath ?? process.env.R1WRAPPER_CONFIG ?? join(__dirname, "config.json");
+  const path = configPath ?? process.env.R1WRAPPER_CONFIG ?? resolveDefaultConfigPath();
   const raw = JSON.parse(readFileSync(path, "utf8"));
   const rawCwd = typeof raw.cwd === "string" ? raw.cwd.trim() : raw.cwd;
   const cwd = expandEnv(String(rawCwd || join(homedir(), "R1Agent"))).replace(/^~(?=$|[\\/])/, homedir());

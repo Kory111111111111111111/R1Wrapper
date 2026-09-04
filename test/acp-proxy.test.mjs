@@ -471,8 +471,8 @@ describe("proxy cli flags", () => {
 });
 
 describe("loadConfig", () => {
-  it("loads cursor repo config", () => {
-    const config = loadConfig(join(repoRoot, "src", "config.json"));
+  it("loads cursor example config", () => {
+    const config = loadConfig(join(repoRoot, "src", "config.example.json"));
     assert.equal(config.backend, "cursor");
     assert.equal(config.authMethod, "cursor_login");
     assert.ok(config.cwd.includes("R1Agent"));
@@ -560,8 +560,8 @@ describe("loadConfig", () => {
     rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  it("shipped config.json has no hardcoded Users path", () => {
-    const raw = JSON.parse(readFileSync(join(repoRoot, "src", "config.json"), "utf8"));
+  it("example config.json has no hardcoded Users path", () => {
+    const raw = JSON.parse(readFileSync(join(repoRoot, "src", "config.example.json"), "utf8"));
     assert.equal(raw.cwd, "%USERPROFILE%\\R1Agent");
     assert.equal(/\\\\Users\\\\[^\\]+\\\\/i.test(String(raw.cwd)), false);
   });
