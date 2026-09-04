@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { EventEmitter } from "node:events";
-import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { homedir, tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { PassThrough } from "node:stream";
 import { fileURLToPath } from "node:url";
@@ -508,6 +508,62 @@ describe("loadConfig", () => {
     writeFileSync(configPath, JSON.stringify({ backend: "openclaw" }), "utf8");
     assert.throws(() => loadConfig(configPath), /Unknown backend/);
     rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it("expands %USERPROFILE% cwd", () => {
+    const tmpDir = mkdtempSync(join(tmpdir(), "r1wrapper-config-"));
+    const configPath = join(tmpDir, "config.json");
+    writeFileSync(
+      configPath,
+      JSON.stringify({
+        backend: "cursor",
+        cwd: "%USERPROFILE%\\R1Agent",
+        cursor: { command: "agent", args: ["acp"] },
+      }),
+      "utf8",
+    );
+    const config = loadConfig(configPath);
+    assert.equal(config.cwd, join(process.env.USERPROFILE ?? homedir(), "R1Agent"));
+    rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it("defaults omitted cwd to homedir R1Agent", () => {
+    const tmpDir = mkdtempSync(join(tmpdir(), "r1wrapper-config-"));
+    const configPath = join(tmpDir, "config.json");
+    writeFileSync(
+      configPath,
+      JSON.stringify({
+        backend: "cursor",
+        cursor: { command: "agent", args: ["acp"] },
+      }),
+      "utf8",
+    );
+    const config = loadConfig(configPath);
+    assert.equal(config.cwd, join(homedir(), "R1Agent"));
+    rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it("defaults empty cwd to homedir R1Agent", () => {
+    const tmpDir = mkdtempSync(join(tmpdir(), "r1wrapper-config-"));
+    const configPath = join(tmpDir, "config.json");
+    writeFileSync(
+      configPath,
+      JSON.stringify({
+        backend: "cursor",
+        cwd: "   ",
+        cursor: { command: "agent", args: ["acp"] },
+      }),
+      "utf8",
+    );
+    const config = loadConfig(configPath);
+    assert.equal(config.cwd, join(homedir(), "R1Agent"));
+    rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it("shipped config.json has no hardcoded Users path", () => {
+    const raw = JSON.parse(readFileSync(join(repoRoot, "src", "config.json"), "utf8"));
+    assert.equal(raw.cwd, "%USERPROFILE%\\R1Agent");
+    assert.equal(/\\\\Users\\\\[^\\]+\\\\/i.test(String(raw.cwd)), false);
   });
 });
 

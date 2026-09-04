@@ -1,0 +1,49 @@
+﻿diff --git a/scripts/status.ps1 b/scripts/status.ps1
+index 6fb8793..aa22b02 100644
+--- a/scripts/status.ps1
++++ b/scripts/status.ps1
+@@ -12,30 +12,44 @@ if ($userPath) {
+ 
+ . (Join-Path $PSScriptRoot "hijack-lib.ps1")
+ 
+ $RepoRoot = Split-Path -Parent $PSScriptRoot
+ $RepoBin = Join-Path $RepoRoot "bin"
+ $HermesBin = Join-Path $env:LOCALAPPDATA "hermes\bin"
+ $ConfigPath = Join-Path $RepoRoot "src\config.json"
+ $LogFile = Join-Path $env:LOCALAPPDATA "R1Wrapper\logs\acp-proxy.log"
+ $TaskName = "R1Wrapper\repair-hijack"
+ $AgentPidFile = Join-Path $env:USERPROFILE ".rabbit-agent\runtime\rabbit-agent.pid"
+ $AgentStatusFile = Join-Path $env:USERPROFILE ".rabbit-agent\runtime\rabbit-agent.status.json"
+ 
+ Write-Host "=== R1Wrapper status ==="
+ Write-Host ""
+ 
++$workspace = Join-Path $env:USERPROFILE "R1Agent"
++if (Test-Path $ConfigPath) {
++  try {
++    $cfg = Get-Content $ConfigPath -Raw | ConvertFrom-Json
++    if ($cfg.cwd) {
++      $workspace = [Environment]::ExpandEnvironmentVariables([string]$cfg.cwd)
++    }
++  } catch {
++    Write-Host "config cwd: (parse error)"
++  }
++}
++Write-Host "workspace: $workspace"
++Write-Host "config: $ConfigPath"
++
+ function Get-CommandVersion([string]$Name) {
+   if ($Name -eq "agent") {
+     $agentCmd = Join-Path $env:LOCALAPPDATA "cursor-agent\agent.cmd"
+     if (Test-Path $agentCmd) {
+       $output = & cmd /c "`"$agentCmd`" --version 2>&1" | Select-Object -First 1
+       if ($output) {
+         return $output.ToString().Trim()
+       }
+     }
+   }
+ 
+   $output = & cmd /c "$Name --version 2>&1" | Select-Object -First 1
+   if ($output -and $output -notmatch "not recognized") {
+     return $output.ToString().Trim()
+   }

@@ -1,0 +1,16 @@
+# Task 5 review package
+No working-tree diff for README.md vs last commit for this task (README was already written; implementer made no edits).
+
+Shipped src/config.json cwd:
+"cwd": "%USERPROFILE%\\R1Agent"
+
+README.md Config section (lines 50-56):
+**Workspace** (`cwd`): where files from the R1 land.
+
+```json
+"cwd": "%USERPROFILE%\\R1Agent"
+```
+
+That follows whoever is logged into Windows. You can also set a full path if you want the workspace somewhere else. If `cwd` still says `C:\Users\<someone>\R1Agent`, replace it with the `%USERPROFILE%` line — that is the whole “works on any Windows PC” fix.
+
+koryi grep: implementer claims no koryi in README (AGENTS.md is out of this task).

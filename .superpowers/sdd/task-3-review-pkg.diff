@@ -1,0 +1,65 @@
+﻿diff --git a/scripts/install-hijack.ps1 b/scripts/install-hijack.ps1
+index 23a30d5..61fd227 100644
+--- a/scripts/install-hijack.ps1
++++ b/scripts/install-hijack.ps1
+@@ -18,24 +18,34 @@ param(
+ $ErrorActionPreference = "Stop"
+ 
+ . (Join-Path $PSScriptRoot "hijack-lib.ps1")
+ 
+ $RepoRoot = Split-Path -Parent $PSScriptRoot
+ $RepoBin = Join-Path $RepoRoot "bin"
+ $HermesBin = Join-Path $env:LOCALAPPDATA "hermes\bin"
+ $Workspace = Join-Path $env:USERPROFILE "R1Agent"
+ $LogDir = Join-Path $env:LOCALAPPDATA "R1Wrapper\logs"
+ $RepairScript = Join-Path $PSScriptRoot "repair-hijack.ps1"
+ $TaskName = "R1Wrapper\repair-hijack"
+ 
++function Remove-LeftoverHermesWatchdog {
++  $watchdog = Get-ScheduledTask -TaskName "RabbitR1HermesWatchdog" -ErrorAction SilentlyContinue
++  if (-not $watchdog) {
++    Write-Host "No leftover Hermes watchdog task"
++    return
++  }
++  Unregister-ScheduledTask -TaskName "RabbitR1HermesWatchdog" -Confirm:$false
++  Write-Host "Removed leftover scheduled task: RabbitR1HermesWatchdog"
++}
++
+ function Register-RepairTask {
+   if (-not (Test-Path $RepairScript)) {
+     Write-Host "Repair script not found; skipping scheduled task registration."
+     return $false
+   }
+ 
+   try {
+     $action = New-ScheduledTaskAction `
+       -Execute "powershell.exe" `
+       -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$RepairScript`""
+ 
+     $logonTrigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
+@@ -112,24 +122,25 @@ function Install-Hijack {
+   $cursorAgent = Join-Path $env:LOCALAPPDATA "cursor-agent"
+   if ($env:Path -notlike "*$cursorAgent*") {
+     $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+     if ($userPath -notlike "*$cursorAgent*") {
+       $newPath = if ([string]::IsNullOrWhiteSpace($userPath)) { $cursorAgent } else { "$cursorAgent;$userPath" }
+       [Environment]::SetEnvironmentVariable("Path", $newPath, "User")
+       $env:Path = "$cursorAgent;$env:Path"
+       Write-Host "Prepended user PATH: $cursorAgent"
+     }
+   }
+ 
+   Register-RepairTask | Out-Null
++  Remove-LeftoverHermesWatchdog
+ 
+   Restart-RabbitAgent
+   Write-Host ""
+   Write-Host "Install complete. Test with:"
+   Write-Host "  hermes acp --check"
+   Write-Host "  hermes acp --version"
+   Write-Host "  .\scripts\status.ps1"
+   Write-Host ""
+   Write-Host "Then on the R1: Hermes page -> PTT a short phrase."
+ }
+ 
+ function Uninstall-Hijack {

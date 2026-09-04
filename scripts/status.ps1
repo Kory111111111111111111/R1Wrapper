@@ -24,6 +24,23 @@ $AgentStatusFile = Join-Path $env:USERPROFILE ".rabbit-agent\runtime\rabbit-agen
 Write-Host "=== R1Wrapper status ==="
 Write-Host ""
 
+$workspace = Join-Path $env:USERPROFILE "R1Agent"
+if (Test-Path $ConfigPath) {
+  try {
+    $cfg = Get-Content $ConfigPath -Raw | ConvertFrom-Json
+    if ($cfg.cwd) {
+      $workspace = [Environment]::ExpandEnvironmentVariables([string]$cfg.cwd)
+      if ($workspace -match '^~(?=$|[\\/])') {
+        $workspace = $workspace -replace '^~', $env:USERPROFILE
+      }
+    }
+  } catch {
+    Write-Host "config cwd: (parse error)"
+  }
+}
+Write-Host "workspace: $workspace"
+Write-Host "config: $ConfigPath"
+
 function Get-CommandVersion([string]$Name) {
   if ($Name -eq "agent") {
     $agentCmd = Join-Path $env:LOCALAPPDATA "cursor-agent\agent.cmd"

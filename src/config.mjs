@@ -93,7 +93,8 @@ function resolveBackendBlock(backendId, raw) {
 export function loadConfig(configPath) {
   const path = configPath ?? process.env.R1WRAPPER_CONFIG ?? join(__dirname, "config.json");
   const raw = JSON.parse(readFileSync(path, "utf8"));
-  const cwd = expandEnv(String(raw.cwd ?? join(homedir(), "R1Agent"))).replace(/^~(?=$|[\\/])/, homedir());
+  const rawCwd = typeof raw.cwd === "string" ? raw.cwd.trim() : raw.cwd;
+  const cwd = expandEnv(String(rawCwd || join(homedir(), "R1Agent"))).replace(/^~(?=$|[\\/])/, homedir());
 
   const backendId = raw.backend ?? "cursor";
   if (backendId !== "cursor" && backendId !== "gemini") {

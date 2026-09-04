@@ -1,0 +1,100 @@
+﻿# Task 2 review package
+# This task only adds 'defaults omitted cwd to homedir R1Agent'.
+# Same file also contains Task 1 tests (already reviewed). Judge only the omitted-cwd test and any config.mjs change (expect none).
+diff --git a/test/acp-proxy.test.mjs b/test/acp-proxy.test.mjs
+index 8c734fb..51402db 100644
+--- a/test/acp-proxy.test.mjs
++++ b/test/acp-proxy.test.mjs
+@@ -1,20 +1,20 @@
+ import assert from "node:assert/strict";
+ import { spawn } from "node:child_process";
+ import { EventEmitter } from "node:events";
+-import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+-import { tmpdir } from "node:os";
++import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
++import { homedir, tmpdir } from "node:os";
+ import { join, dirname } from "node:path";
+ import { PassThrough } from "node:stream";
+ import { fileURLToPath } from "node:url";
+ import { describe, it } from "node:test";
+ import {
+   buildAuthenticateSuccessResponse,
+   buildPermissionAllowOnceResponse,
+   isSessionNewResponse,
+   isSetModelIdSupported,
+   normalizeJsonLine,
+   parseJsonLine,
+   resolveAcpModelId,
+   rewriteInitializeResult,
+   rewriteSessionNewModel,
+   rewriteSessionNewParams,
+@@ -497,30 +497,69 @@ describe("loadConfig", () => {
+     const config = loadConfig(configPath);
+     assert.equal(config.backend, "gemini");
+     assert.equal(config.authMethod, "none");
+     assert.equal(config.defaultModel, undefined);
+     assert.deepEqual(config.agentArgs, ["--acp"]);
+     rmSync(tmpDir, { recursive: true, force: true });
+   });
+ 
+   it("throws for unknown backend", () => {
+     const tmpDir = mkdtempSync(join(tmpdir(), "r1wrapper-config-"));
+     const configPath = join(tmpDir, "config.json");
+     writeFileSync(configPath, JSON.stringify({ backend: "openclaw" }), "utf8");
+     assert.throws(() => loadConfig(configPath), /Unknown backend/);
+     rmSync(tmpDir, { recursive: true, force: true });
+   });
++
++  it("expands %USERPROFILE% cwd", () => {
++    const tmpDir = mkdtempSync(join(tmpdir(), "r1wrapper-config-"));
++    const configPath = join(tmpDir, "config.json");
++    writeFileSync(
++      configPath,
++      JSON.stringify({
++        backend: "cursor",
++        cwd: "%USERPROFILE%\\R1Agent",
++        cursor: { command: "agent", args: ["acp"] },
++      }),
++      "utf8",
++    );
++    const config = loadConfig(configPath);
++    assert.equal(config.cwd, join(process.env.USERPROFILE ?? homedir(), "R1Agent"));
++    rmSync(tmpDir, { recursive: true, force: true });
++  });
++
++  it("defaults omitted cwd to homedir R1Agent", () => {
++    const tmpDir = mkdtempSync(join(tmpdir(), "r1wrapper-config-"));
++    const configPath = join(tmpDir, "config.json");
++    writeFileSync(
++      configPath,
++      JSON.stringify({
++        backend: "cursor",
++        cursor: { command: "agent", args: ["acp"] },
++      }),
++      "utf8",
++    );
++    const config = loadConfig(configPath);
++    assert.equal(config.cwd, join(homedir(), "R1Agent"));
++    rmSync(tmpDir, { recursive: true, force: true });
++  });
++
++  it("shipped config.json has no hardcoded Users path", () => {
++    const raw = JSON.parse(readFileSync(join(repoRoot, "src", "config.json"), "utf8"));
++    assert.equal(raw.cwd, "%USERPROFILE%\\R1Agent");
++    assert.equal(/\\\\Users\\\\[^\\]+\\\\/i.test(String(raw.cwd)), false);
++  });
+ });
+ 
+ describe("resolveAgentCommand", () => {
+   it("overrides command via R1WRAPPER_AGENT_CMD without changing authMethod", () => {
+     const previous = process.env.R1WRAPPER_AGENT_CMD;
+     process.env.R1WRAPPER_AGENT_CMD = "C:\\custom\\agent.cmd";
+     try {
+       const command = resolveAgentCommand(geminiConfig);
+       assert.equal(command, "C:\\custom\\agent.cmd");
+       assert.equal(geminiConfig.authMethod, "none");
+     } finally {
+       if (previous === undefined) {
+         delete process.env.R1WRAPPER_AGENT_CMD;
+       } else {
+         process.env.R1WRAPPER_AGENT_CMD = previous;

@@ -27,6 +27,21 @@ $LogDir = Join-Path $env:LOCALAPPDATA "R1Wrapper\logs"
 $RepairScript = Join-Path $PSScriptRoot "repair-hijack.ps1"
 $TaskName = "R1Wrapper\repair-hijack"
 
+function Remove-LeftoverHermesWatchdog {
+  $watchdog = Get-ScheduledTask -TaskName "RabbitR1HermesWatchdog" -ErrorAction SilentlyContinue
+  if (-not $watchdog) {
+    Write-Host "No leftover Hermes watchdog task"
+    return
+  }
+  try {
+    Unregister-ScheduledTask -TaskName "RabbitR1HermesWatchdog" -Confirm:$false -ErrorAction Stop
+    Write-Host "Removed leftover scheduled task: RabbitR1HermesWatchdog"
+  } catch {
+    Write-Host "Could not remove leftover Hermes watchdog: $($_.Exception.Message)"
+    Write-Host "Install continues. Remove it manually: Unregister-ScheduledTask -TaskName RabbitR1HermesWatchdog -Confirm:`$false"
+  }
+}
+
 function Register-RepairTask {
   if (-not (Test-Path $RepairScript)) {
     Write-Host "Repair script not found; skipping scheduled task registration."
@@ -121,6 +136,7 @@ function Install-Hijack {
   }
 
   Register-RepairTask | Out-Null
+  Remove-LeftoverHermesWatchdog
 
   Restart-RabbitAgent
   Write-Host ""

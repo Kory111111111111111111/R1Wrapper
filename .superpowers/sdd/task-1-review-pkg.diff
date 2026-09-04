@@ -1,0 +1,96 @@
+﻿# Task 1 review package
+# Base: d57db8b197e41ae47dc5887e08e33625c4eec2ce (HEAD, no task commits)
+# Head: working tree
+ src/config.json         |  2 +-
+ test/acp-proxy.test.mjs | 27 +++++++++++++++++++++++++--
+ 2 files changed, 26 insertions(+), 3 deletions(-)
+
+===== FULL DIFF =====
+
+diff --git a/src/config.json b/src/config.json
+index 4b96a1c..a6b9d4b 100644
+--- a/src/config.json
++++ b/src/config.json
+@@ -1,15 +1,15 @@
+ {
+   "backend": "cursor",
+   "agentName": "hermes-agent",
+   "agentVersion": "0.20.6-r1wrapper",
+-  "cwd": "C:\\Users\\koryi\\R1Agent",
++  "cwd": "%USERPROFILE%\\R1Agent",
+   "autoApprovePermissions": true,
+   "logDir": "%LOCALAPPDATA%\\R1Wrapper\\logs",
+   "cursor": {
+     "command": "agent",
+     "args": ["acp"],
+     "defaultModel": "composer-2.5",
+     "defaultModelParameters": {
+       "fast": "false"
+     }
+   },
+diff --git a/test/acp-proxy.test.mjs b/test/acp-proxy.test.mjs
+index 8c734fb..f172566 100644
+--- a/test/acp-proxy.test.mjs
++++ b/test/acp-proxy.test.mjs
+@@ -1,15 +1,15 @@
+ import assert from "node:assert/strict";
+ import { spawn } from "node:child_process";
+ import { EventEmitter } from "node:events";
+-import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+-import { tmpdir } from "node:os";
++import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
++import { homedir, tmpdir } from "node:os";
+ import { join, dirname } from "node:path";
+ import { PassThrough } from "node:stream";
+ import { fileURLToPath } from "node:url";
+ import { describe, it } from "node:test";
+ import {
+   buildAuthenticateSuccessResponse,
+   buildPermissionAllowOnceResponse,
+   isSessionNewResponse,
+   isSetModelIdSupported,
+   normalizeJsonLine,
+@@ -502,20 +502,43 @@ describe("loadConfig", () => {
+     rmSync(tmpDir, { recursive: true, force: true });
+   });
+ 
+   it("throws for unknown backend", () => {
+     const tmpDir = mkdtempSync(join(tmpdir(), "r1wrapper-config-"));
+     const configPath = join(tmpDir, "config.json");
+     writeFileSync(configPath, JSON.stringify({ backend: "openclaw" }), "utf8");
+     assert.throws(() => loadConfig(configPath), /Unknown backend/);
+     rmSync(tmpDir, { recursive: true, force: true });
+   });
++
++  it("expands %USERPROFILE% cwd", () => {
++    const tmpDir = mkdtempSync(join(tmpdir(), "r1wrapper-config-"));
++    const configPath = join(tmpDir, "config.json");
++    writeFileSync(
++      configPath,
++      JSON.stringify({
++        backend: "cursor",
++        cwd: "%USERPROFILE%\\R1Agent",
++        cursor: { command: "agent", args: ["acp"] },
++      }),
++      "utf8",
++    );
++    const config = loadConfig(configPath);
++    assert.equal(config.cwd, join(process.env.USERPROFILE ?? homedir(), "R1Agent"));
++    rmSync(tmpDir, { recursive: true, force: true });
++  });
++
++  it("shipped config.json has no hardcoded Users path", () => {
++    const raw = JSON.parse(readFileSync(join(repoRoot, "src", "config.json"), "utf8"));
++    assert.equal(raw.cwd, "%USERPROFILE%\\R1Agent");
++    assert.equal(/\\\\Users\\\\[^\\]+\\\\/i.test(String(raw.cwd)), false);
++  });
+ });
+ 
+ describe("resolveAgentCommand", () => {
+   it("overrides command via R1WRAPPER_AGENT_CMD without changing authMethod", () => {
+     const previous = process.env.R1WRAPPER_AGENT_CMD;
+     process.env.R1WRAPPER_AGENT_CMD = "C:\\custom\\agent.cmd";
+     try {
+       const command = resolveAgentCommand(geminiConfig);
+       assert.equal(command, "C:\\custom\\agent.cmd");
+       assert.equal(geminiConfig.authMethod, "none");
