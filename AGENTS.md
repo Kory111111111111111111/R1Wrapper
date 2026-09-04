@@ -11,7 +11,7 @@
 - Check health with `scripts/status.ps1`; proxy logs live at `%LOCALAPPDATA%\R1Wrapper\logs\acp-proxy.log`. README is at repo root (Windows/PowerShell; no keys in config).
 - Default backend is `cursor` in `src/config.json`; set `"backend": "gemini"` to use `gemini --acp` (API key via Gemini CLI store, not config).
 - Shipped template is `src/config.example.json` (`cwd` `%USERPROFILE%\R1Agent`). Local `src/config.json` is gitignored and holds this PC's paths; proxy prefers it, then falls back to the example. Proxy still rewrites Rabbit's leaked `/home/yt`.
-- This dev PC is user koryi; the handoff doc's `C:\Users\Home` paths refer to a different machine.
+- This dev PC is user koryi; `C:\Users\Home` paths refer to a different machine.
 - rabbit-agent v0.1.10 on this PC spawns `hermes acp` and speaks ACP JSON-RPC NDJSON over stdio.
 - Model is applied via `session/set_model` after `session/new`; the CLI `--model` flag does not reliably apply to `agent acp`.
 - The proxy forwards `session/prompt` content, including images, through to Cursor.
